@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GameWindow extends JFrame {
+    // 游戏状态 0未开始 1游戏中 2商店 3胜利 4失败
+    static int state;
     // 存储金块、石块
     List<Object> objectList = new ArrayList<>();
     Background bg = new Background();
@@ -72,12 +74,43 @@ public class GameWindow extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
-                if (e.getButton() == 1 && line.state == 0){
-                    line.state = 1;
-                }
-                if (e.getButton() == 3 && line.state == 3){
-                    Background.waterFlag = true;
-                    Background.waterNum--;
+                switch (state){
+                    case 0:
+                        if (e.getButton() == 3){
+                            state = 1;
+                            bg.starTime = System.currentTimeMillis();
+                        }
+                        break;
+                    case 1:
+                        if (e.getButton() == 1 && line.state == 0){
+                            line.state = 1;
+                        }
+                        if (e.getButton() == 3 && line.state == 3){
+                            if (Background.waterNum > 0){
+                                Background.waterFlag = true;
+                                Background.waterNum--;
+                            }
+                        }
+                        break;
+                    case 2:
+                        if (e.getButton() == 1){
+                            bg.shop = true;
+                        }
+                        if (e.getButton() == 3){
+                            state = 1;
+                            bg.starTime = System.currentTimeMillis();
+                        }
+                        break;
+                    case 3:
+
+                    case 4:
+                        if (e.getButton() == 1){
+                            state = 0;
+                            bg.reGame();
+                            line.reLine();
+                        }
+                        break;
+                    default:
                 }
             }
         });
@@ -92,10 +125,20 @@ public class GameWindow extends JFrame {
             }
         }
     }
-
+    // 下一关
     public void nextLevel(){
-        if (Background.count >= Background.goal){
-            Background.level++;
+        if (bg.gameTime() && state == 1){
+            if (Background.count >= Background.goal){
+                if (Background.level == 5){ // 五关之后成功
+                    state = 4;
+                }else{
+                    state = 2;
+                    Background.level++;
+                    Background.goal = (Background.level + 2) * 3;  // 目标分数随关卡数变化
+                }
+            }else{
+                state = 3;
+            }
             dispose();
             GameWindow gameWindow = new GameWindow();
             gameWindow.init();
@@ -106,11 +149,13 @@ public class GameWindow extends JFrame {
         offScreenImage = this.createImage(768,800);
         Graphics gImage = offScreenImage.getGraphics();
         bg.paintSelf(gImage);
-        // 绘制物体
-        for (Object obj:objectList){
-            obj.paintSelf(gImage);
+        if (state == 1){
+            // 绘制物体
+            for (Object obj:objectList){
+                obj.paintSelf(gImage);
+            }
+            line.paintSelf(gImage);
         }
-        line.paintSelf(gImage);
         g.drawImage(offScreenImage,0,0,null);
     }
 

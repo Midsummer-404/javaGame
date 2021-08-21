@@ -128,4 +128,10 @@ public class Line {
         }
 
     }
+
+    // 重置线
+    public void reLine(){
+        angle = 0;
+        length = 100;
+    }
 }
